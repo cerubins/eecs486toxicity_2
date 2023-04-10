@@ -18,6 +18,5 @@ for file in glob.glob('output/*'):
         toxicScores[subreddit] = toxicCount/len(lines)
 
 # outputs subreddits sorted by toxicity percentage
-sortedScores = sorted(toxicScores)
-for subreddit in sortedScores:
-    print(subreddit, " ", toxicScores[subreddit], "\n")
+sortedScores = sorted(toxicScores.items(), key=lambda x:x[1], reverse = True)
+print(sortedScores)
