@@ -112,42 +112,46 @@ print(train_data)
 print(validation_data)
 model.fit(train_data, epochs=2, validation_data=validation_data)
 
+model.save_pretrained("model")
+
 # TESTING + OUTPUT
 
-print("TESTING")
+# print("TESTING")
 
-# Iterates through subreddit comment files
-for file in glob.glob('comments/*'):
-    with open(file) as f:
-        lines = f.readlines()
+# model = TFBertForSequenceClassification.from_pretrained("path/to/awesome-name-you-picked")
 
-        filename = file.removeprefix('comments/')
+# # Iterates through subreddit comment files
+# for file in glob.glob('comments/*'):
+#     with open(file) as f:
+#         lines = f.readlines()
 
-        print(filename)
+#         filename = file.removeprefix('comments/')
+
+#         print(filename)
         
-        # preprocessing here
-        # TODO: Add Katie's function
+#         # preprocessing here
+#         # TODO: Add Katie's function
 
-        # BERT tokenize here
-        tf_batch = tokenizer(lines, max_length=128, padding=True, truncation=True, return_tensors='tf')
+#         # BERT tokenize here
+#         tf_batch = tokenizer(lines, max_length=128, padding=True, truncation=True, return_tensors='tf')
 
-        # Run the model on the list
-        tf_outputs = model(tf_batch)
+#         # Run the model on the list
+#         tf_outputs = model(tf_batch)
 
-        # Runs softmax to get predictions
-        tf_predictions = tf.nn.softmax(tf_outputs[0], axis=-1)
+#         # Runs softmax to get predictions
+#         tf_predictions = tf.nn.softmax(tf_outputs[0], axis=-1)
 
-        # Label predictions as toxic and non-toxic
-        labels = ['Non-Toxic','Toxic']
+#         # Label predictions as toxic and non-toxic
+#         labels = ['Non-Toxic','Toxic']
         
-        # Max of predictions gets labelled
-        label = tf.argmax(tf_predictions, axis=1)
-        label = label.numpy()
+#         # Max of predictions gets labelled
+#         label = tf.argmax(tf_predictions, axis=1)
+#         label = label.numpy()
 
-        # Prints predictions into output file
-        f = open('output/' + filename, 'w')
-        for i in range(len(lines)):
-            f.write(str(lines[i]) + str(labels[label[i]]) + "\n")
+#         # Prints predictions into output file
+#         f = open('output/' + filename, 'w')
+#         for i in range(len(lines)):
+#             f.write(str(lines[i]) + str(labels[label[i]]) + "\n")
 
 
 
