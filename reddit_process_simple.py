@@ -13,6 +13,7 @@ import emoji
 import re
 import nltk
 from nltk.corpus import sentiwordnet as swn
+from nltk.stem import PorterStemmer
 
 def main():
     # open folder containing data collection
@@ -279,15 +280,12 @@ def replace_modifiers(tokens):
 # input: string, word
 # output: string, word affect or just word
 def word_affect(word):
-    english_vocab = set(w.lower() for w in nltk.corpus.words.words())
     if word in english_vocab:
         # check if word is in synsets list after parsing to singular
         if list(swn.senti_synsets(word)) == []:
-            return word
-            #if word.rstrip('s') == word:
-            #    return word
-            #else:
-            #    return word_affect(word.rstrip('s'))
+            if word == porter.stem(word):
+                return word
+            return word_affect(porter.stem(word))
         
         type = ''
         pos_score = list(swn.senti_synsets(word))[0].pos_score()
@@ -314,41 +312,44 @@ def word_affect(word):
             type = "neutral"
         
         return type
-    #else:
+    '''else:
         # set up where letters are consecutive
-        #curr_letter = ''
-        #curr_freq = 0
-        #start_index = []
-        #max_freq = 1
-        #i = 0
-        #for char in word:
-        #    if curr_letter == '':
-        #        curr_letter = char
-        #        curr_freq = 1
-        #        continue
-        #    if char == curr_letter:
-        #        curr_freq += 1
-        #        if curr_freq == max_freq:
-        #            start_index.append(i)
-        #        elif curr_freq > max_freq:
-        #            start_index = [i]
-        #            max_freq = curr_freq
-        #    else:
-        #        curr_letter = char
-        #        curr_freq = 1
-        #    i += 1
-                
+        curr_letter = ''
+        curr_freq = 0
+        start_index = []
+        max_freq = 1
+        i = 0
+        for char in word:
+            if curr_letter == '':
+                curr_letter = char
+                curr_freq = 1
+                continue
+            if char == curr_letter:
+                curr_freq += 1
+                if curr_freq == max_freq:
+                    start_index.append(i)
+                elif curr_freq > max_freq:
+                    start_index = [i]
+                    max_freq = curr_freq
+            else:
+                curr_letter = char
+                curr_freq = 1
+            i += 1
+               
         # reduce by one at each index
-        #for index in start_index:
-        #    word_strip = ''
-        #    for i in range(len(word)):
-        #        if i != index:
-        #            word_strip += word[i]
-        #
-        #    output = word_affect(word_strip)
-        #    
-        #    if output == "hpositive" or output == "positive" or output == "negative" or output == "hnegative" or output == "neutral":
-        #        return "stressed " + str(output)
+        for index in start_index:
+            word_strip = ''
+            for i in range(len(word)):
+                if i != index:
+                    word_strip += word[i]
+            if word_strip not in stress_hash:
+                stress_hash[word_strip] = word_affect(word_strip)
+            output = stress_hash[word_strip]
+            
+            if output == "hpositive" or output == "positive" or output == "negative" or output == "hnegative" or output == "neutral":
+                stress_hash[word_strip] = output
+                return "stressed " + str(output)
+    '''
     return word
 
 
@@ -405,4 +406,9 @@ if __name__ == "__main__":
         for row in csvread:
             slang[row[0]] = row[1]
 
+    english_vocab = set(w.lower() for w in nltk.corpus.words.words())
+    porter = PorterStemmer()
+
+    stress_hash = {}
+    
     main()
