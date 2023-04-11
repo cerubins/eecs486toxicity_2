@@ -20,11 +20,11 @@ def fix_gpu():
 fix_gpu()
 
 def wiki_tsv_to_dataframe():
-    df = pd.read_csv('data/processed_train.tsv', sep='\t')
+    df = pd.read_csv('data/processed_train.tsv_processed/wiki_processed.tsv', sep='\t')
     df = df[['comment_text', 'binary']]
     df.columns = ['TEXT', 'TOXIC']
-    df1 = df.iloc[:1600]
-    df2 = df.iloc[1600:3200]
+    df1 = df.iloc[:16]
+    df2 = df.iloc[16:32]
 
     return df1, df2
 
@@ -118,7 +118,7 @@ model.save_pretrained("model")
 
 # print("TESTING")
 
-# model = TFBertForSequenceClassification.from_pretrained("path/to/awesome-name-you-picked")
+# model = TFBertForSequenceClassification.from_pretrained("model")
 
 # # Iterates through subreddit comment files
 # for file in glob.glob('comments/*'):
@@ -128,9 +128,6 @@ model.save_pretrained("model")
 #         filename = file.removeprefix('comments/')
 
 #         print(filename)
-        
-#         # preprocessing here
-#         # TODO: Add Katie's function
 
 #         # BERT tokenize here
 #         tf_batch = tokenizer(lines, max_length=128, padding=True, truncation=True, return_tensors='tf')
