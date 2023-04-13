@@ -1,3 +1,31 @@
+#!/usr/bin/python3
+'''
+bert_wikipedia_training.py
+
+Written by Carlos Rubins for EECS 486
+Help from Andrew Mastruserio in using pandas dataframes
+
+General design followed from Orhan G. Yalcin's article:
+https://towardsdatascience.com/sentiment-analysis-in-10-minutes-with-bert-and-hugging-face-294e8a04b671
+
+Many thanks to Orhan for making a very easy to use guide.
+
+How to run:
+% python3 bert_wikipedia_training.py
+
+You will need to install a lot of different python libraries for this.
+Tensorflow itself is about 0.5 GB so be warned.
+
+General Structure:
+This script opens each file in the directory, then for each line, replaces each word with its sentiment.
+The word replacement follows these steps:
+1) Convert data found in data/wiki_pre_processed.tsv into pandas dataframes
+2) Convert data frames into InputExamples
+3) Convert InputExamples into tf Dataset that Bert can use
+4) Configure pretrained text classification model
+5) Fine-tune model using wikipedia dataset (this step will take about 8 hours at the moment, may differ if amount of data is increased)
+6) Save model to model folder.
+'''
 from transformers import InputFeatures, InputExample, BertTokenizer, TFBertForSequenceClassification
 import glob
 import time

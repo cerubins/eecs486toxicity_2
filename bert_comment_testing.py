@@ -1,3 +1,29 @@
+#!/usr/bin/python3
+'''
+bert_comment_testing.py
+
+Written by Carlos Rubins & Ranya Liu for EECS 486
+
+General design followed from the second half of Orhan G. Yalcin's article:
+https://towardsdatascience.com/sentiment-analysis-in-10-minutes-with-bert-and-hugging-face-294e8a04b671
+
+Many thanks to Orhan for making a very easy to use guide.
+
+How to run:
+% python3 bert_comment_testing.py
+
+You will need to install a lot of different python libraries for this.
+Tensorflow itself is about 0.5 GB so be warned.
+
+General Structure:
+This script opens each file in the directory, then for each line, replaces each word with its sentiment.
+The word replacement follows these steps:
+1) Load model made from bert_wikipedia_training.py
+2) Split the comments into bite-sized chunks to avoid a memory overflow
+3) Iterate through the split files and create a label for each comment
+4) Output to output/ folder. This will then be used by analysis.py
+'''
+
 from transformers import InputFeatures, InputExample, BertTokenizer, TFBertForSequenceClassification
 import glob
 import time
@@ -10,8 +36,6 @@ from tqdm.notebook import tqdm
 
 from tensorflow.compat.v1 import ConfigProto
 from tensorflow.compat.v1 import InteractiveSession
-
-print("TESTING")
 
 # Loads finetuned BERT model and tokenizes with training tokenizer
 model = TFBertForSequenceClassification.from_pretrained("model")
@@ -44,9 +68,6 @@ for file in glob.glob('comments_test_processed/*'):
         output = open('comments_test_processed_split/' + filename + str(count) + ".txt", 'w')
         for line in lines:
             output.write(line)
-
-# Loads trained BERT model from saved file
-model = TFBertForSequenceClassification.from_pretrained("model")
 
 # Iterates through subreddit comment files
 for file in sorted(glob.glob('thing/*')):
