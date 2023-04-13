@@ -1,10 +1,51 @@
 #!/usr/bin/python3
 '''
-needs some work but should work for now.
-run like
-% python3 reddit_process.py directoryname/
-eg
-% python3 reddit_process.py comments/
+wikipedia_process_simple.py
+
+Written by Kathleen Stone for EECS 486
+Adapted from reddit_process_simple.py by Andrew Mastruserio
+
+General design by Alexandra Balahur in
+Sentiment Analysis in Social Media Texts
+https://aclanthology.org/W13-1617.pdf
+
+How to run:
+% python3 wikipedia_process_simple.py <directory_name>/
+
+Where <directory_name> is the name of the directory containing .tsv files to be processed line by line.
+
+For example: 
+% python3 wikipedia_process_simple.py comments/
+
+General Structure:
+This script opens each file in the directory, then for each line, replaces each word with its sentiment.
+The word replacement follows these steps:
+1) Lowercase all text
+2) Remove all content in square brackets
+3) Remove emojis
+4) Remove links and attached text
+5) Replace multi-punctuation with specific words
+    - multiple periods in a row (eg. '..') replaced with "multistop"
+    - multiple exclamation marks in a row replaced with "multiexclamation"
+    - multiple question marks in a row replaced with "multiquestion"
+6) emoticons replaced with words "positive", "negative", or "neutral"
+    - based on emoticon sentiment list from SentiStrength dataset
+7) slang is normalized, which allows step (10) to parse slang sentiment properly
+    - same slang list as the one in Sentiment Analysis in Social Media Texts
+    - https://slang.net/terms/social_media
+8) text and punctuation are separated with whitespace
+9) modifier words are replaced with corresponding: "diminisher", "intensifier", and "negator"
+    - this indicates to BERT that the word following it is diminished, intensified, or negated by the word
+    - modifier lists from The Impact of Intensifiers, Diminishers and Negations on Emotion Expressions
+    -  https://www.semanticscholar.org/paper/The-Impact-of-Intensifiers-%2C-Diminishers-and-on-Strohm/d40e7b7df41a420e1bd456b39cae68726e3a0acb
+10) English words (dicitionary from NLTK's English vocabulary list) are replaced by a sentiment from SentiWordNet
+    - if positive = negative, word becomes "neutral"
+    - if positive > negative and positive > 0.5, word becomes "hpositive"
+    - if positive > negative, word becomes "positive"
+    - if negative > positive and negative > 0.5, word becomes "hnegative"
+    - if negative > positive, word becomes "negative"
+The script writes the output files to a new output folder, titled <directory_name>_processed/
+All files have "_processed" appended to their filenames.
 '''
 import sys
 import os
@@ -37,6 +78,7 @@ def main():
 
 # input: string, the preprocessed text
 # output: string, the processed text
+# process processes the line of text through each step of the sentiment replacement process
 def process(line):
     # lowercase everything
     line = line.lower()
@@ -317,46 +359,10 @@ def word_affect(word):
             type = "neutral"
         
         return type
-    #else:
-        # set up where letters are consecutive
-        #curr_letter = ''
-        #curr_freq = 0
-        #start_index = []
-        #max_freq = 1
-        #i = 0
-        #for char in word:
-        #    if curr_letter == '':
-        #        curr_letter = char
-        #        curr_freq = 1
-        #        continue
-        #    if char == curr_letter:
-        #        curr_freq += 1
-        #        if curr_freq == max_freq:
-        #            start_index.append(i)
-        #        elif curr_freq > max_freq:
-        #            start_index = [i]
-        #            max_freq = curr_freq
-        #    else:
-        #        curr_letter = char
-        #        curr_freq = 1
-        #    i += 1
-                
-        # reduce by one at each index
-        #for index in start_index:
-        #    word_strip = ''
-        #    for i in range(len(word)):
-        #        if i != index:
-        #            word_strip += word[i]
-        #
-        #    output = word_affect(word_strip)
-        #    
-        #    if output == "hpositive" or output == "positive" or output == "negative" or output == "hnegative" or output == "neutral":
-        #        return "stressed " + str(output)
     return word
 
 
 # global variables
-# list of emoticons and corresponding emotion
 if __name__ == "__main__":
     # make emoticon dictionary
     # emoticons[<emoticon>] = "positive" | "negative" | "neutral"
@@ -408,8 +414,8 @@ if __name__ == "__main__":
         for row in csvread:
             slang[row[0]] = row[1]
 
+    # English vocabulary list
     english_vocab = set(w.lower() for w in nltk.corpus.words.words())
-
     porter = PorterStemmer()
 
     main()
