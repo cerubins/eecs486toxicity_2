@@ -17,8 +17,7 @@ You will need to install a lot of different python libraries for this.
 Tensorflow itself is about 0.5 GB so be warned.
 
 General Structure:
-This script opens each file in the directory, then for each line, replaces each word with its sentiment.
-The word replacement follows these steps:
+This script downloads a pre-trained model from Bert and fine-tunes it using our wikipedia dataset.
 1) Convert data found in data/wiki_pre_processed.tsv into pandas dataframes
 2) Convert data frames into InputExamples
 3) Convert InputExamples into tf Dataset that Bert can use

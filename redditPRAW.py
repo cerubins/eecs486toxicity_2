@@ -1,3 +1,21 @@
+#!/usr/bin/python3
+'''
+redditPRAW.py
+
+Written by Carlos Rubins for EECS 486
+
+How to run:
+% python3 redditPRAW.py
+
+General Structure:
+This script uses a python library which crawls the reddit API to download the most
+recent posts and comments from specified subreddits.
+1) Load model made from bert_wikipedia_training.py
+2) Split the comments into bite-sized chunks to avoid a memory overflow
+3) Iterate through the split files and create a label for each comment
+4) Output to output/ folder. This will then be used by analysis.py
+'''
+
 from IPython import display
 import praw
 import glob

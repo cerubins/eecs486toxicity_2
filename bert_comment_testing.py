@@ -16,8 +16,8 @@ You will need to install a lot of different python libraries for this.
 Tensorflow itself is about 0.5 GB so be warned.
 
 General Structure:
-This script opens each file in the directory, then for each line, replaces each word with its sentiment.
-The word replacement follows these steps:
+This script uses the fine-tuned model from bert_wikipedia_training.py and creates files that
+have the comment lines accompanied by the model's estimate if the comment is toxic or not.
 1) Load model made from bert_wikipedia_training.py
 2) Split the comments into bite-sized chunks to avoid a memory overflow
 3) Iterate through the split files and create a label for each comment
