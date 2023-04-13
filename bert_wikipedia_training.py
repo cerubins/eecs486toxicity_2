@@ -24,7 +24,7 @@ fix_gpu()
 # Take information from the wiki dataset and convert them into
 # Pandas Dataframes for usage.
 def wiki_tsv_to_dataframe():
-    df = pd.read_csv('data/processed_train.tsv_processed/wiki_processed.tsv', sep='\t')
+    df = pd.read_csv('data/wiki_pre_processed.tsv', sep='\t')
     df = df[['comment_text', 'binary']]
     df.columns = ['TEXT', 'TOXIC']
     df1 = df.iloc[:3200]
