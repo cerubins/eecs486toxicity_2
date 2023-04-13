@@ -11,6 +11,8 @@ from tqdm.notebook import tqdm
 from tensorflow.compat.v1 import ConfigProto
 from tensorflow.compat.v1 import InteractiveSession
 
+# Fixes an error with tensorflow on some computers
+# Specifically if you are using cuda/GPU processing
 def fix_gpu():
     config = ConfigProto()
     config.gpu_options.allow_growth = True
@@ -19,8 +21,10 @@ def fix_gpu():
 
 fix_gpu()
 
+# Take information from the wiki dataset and convert them into
+# Pandas Dataframes for usage.
 def wiki_tsv_to_dataframe():
-    df = pd.read_csv('data/processed_train.tsv_processed/wiki_processed.tsv', sep='\t')
+    df = pd.read_csv('data/wiki_pre_processed.tsv', sep='\t')
     df = df[['comment_text', 'binary']]
     df.columns = ['TEXT', 'TOXIC']
     df1 = df.iloc[:3200]
@@ -28,42 +32,47 @@ def wiki_tsv_to_dataframe():
 
     return df1, df2
 
+# Declare our model and our tokenizer.
+# We will use pretrained models and fine-tune them for our usage
 model = TFBertForSequenceClassification.from_pretrained("bert-base-uncased")
 tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
-
-# TRAINING
 
 # Creating dataframe for training data
 df, df_test = wiki_tsv_to_dataframe()
 
+# Take our Dataframes and convert rows into Input Examples
 def convert_data_to_examples(train, test, DATA_COLUMN, LABEL_COLUMN): 
-  train_InputExamples = train.apply(lambda x: InputExample(guid=None, # Globally unique ID for bookkeeping, unused in this case
+  train_InputExamples = train.apply(lambda x: InputExample(guid=None,
                                                           text_a = x[DATA_COLUMN], 
                                                           text_b = None,
                                                           label = x[LABEL_COLUMN]), axis = 1)
 
-  validation_InputExamples = test.apply(lambda x: InputExample(guid=None, # Globally unique ID for bookkeeping, unused in this case
+  validation_InputExamples = test.apply(lambda x: InputExample(guid=None,
                                                           text_a = x[DATA_COLUMN], 
                                                           text_b = None,
                                                           label = x[LABEL_COLUMN]), axis = 1)
   
   return train_InputExamples, validation_InputExamples
 
+# Take Input Example objects and create Bert-readable input
 def convert_examples_to_tf_dataset(examples, tokenizer, max_length=512):
-    features = [] # -> will hold InputFeatures to be converted later
+    # Holds Input features
+    features = []
 
     for e in examples:
-        # Documentation is really strong for this method, so please take a look at it
+
+        # Encode tokenization for BERT usage
         input_dict = tokenizer.encode_plus(
             e.text_a,
             add_special_tokens=True,
             max_length=max_length, # truncates if len(s) > max_length
             return_token_type_ids=True,
             return_attention_mask=True,
-            padding='max_length', # pads to the right by default # CHECK THIS for pad_to_max_length
-            truncation=True
+            padding='max_length', # pads them to all be the same size
+            truncation=True # Works with max_length to cut down to size
         )
 
+        # split features that we want into different dictionaries for usage in generator function
         input_ids, token_type_ids, attention_mask = (input_dict["input_ids"],
             input_dict["token_type_ids"], input_dict['attention_mask'])
 
@@ -73,6 +82,7 @@ def convert_examples_to_tf_dataset(examples, tokenizer, max_length=512):
             )
         )
 
+    # Generate the bert-readable inputs
     def gen():
         for f in features:
             yield (
@@ -84,6 +94,7 @@ def convert_examples_to_tf_dataset(examples, tokenizer, max_length=512):
                 f.label,
             )
 
+    # Return dataset from method using our "gen()" function
     return tf.data.Dataset.from_generator(gen, ({"input_ids": tf.int32, "attention_mask": tf.int32, "token_type_ids": tf.int32}, tf.int64),
         (
             {
@@ -95,60 +106,27 @@ def convert_examples_to_tf_dataset(examples, tokenizer, max_length=512):
         ),
     )
 
+# Declare our column names
 DATA_COLUMN = 'TEXT'
 LABEL_COLUMN = 'TOXIC'
 
+# Get InputExamples to convert into datasets
 train_InputExamples, validation_InputExamples = convert_data_to_examples(df, df_test, DATA_COLUMN, LABEL_COLUMN)
 
+# Input datasets and convert them into tensorflow datasets
 train_data = convert_examples_to_tf_dataset(list(train_InputExamples), tokenizer)
-print(train_data)
+
+# Create batches of 32 for testing
 train_data = train_data.shuffle(100).batch(32).repeat(2)
 
 validation_data = convert_examples_to_tf_dataset(list(validation_InputExamples), tokenizer)
 validation_data = validation_data.batch(32)
 
+# Configure the model to have a small learning rate, due to our small batch size
 model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=3e-5, epsilon=1e-08, clipnorm=1.0), loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True), metrics=[tf.keras.metrics.SparseCategoricalAccuracy('accuracy')])
-print(train_data)
-print(validation_data)
+
+# Fine-tune the model from before
 model.fit(train_data, epochs=2, validation_data=validation_data)
 
+# Save the model so we don't have the computer crash :)
 model.save_pretrained("model")
-
-# TESTING + OUTPUT
-
-# print("TESTING")
-
-# model = TFBertForSequenceClassification.from_pretrained("model")
-
-# # Iterates through subreddit comment files
-# for file in glob.glob('comments/*'):
-#     with open(file) as f:
-#         lines = f.readlines()
-
-#         filename = file.removeprefix('comments/')
-
-#         print(filename)
-
-#         # BERT tokenize here
-#         tf_batch = tokenizer(lines, max_length=128, padding=True, truncation=True, return_tensors='tf')
-
-#         # Run the model on the list
-#         tf_outputs = model(tf_batch)
-
-#         # Runs softmax to get predictions
-#         tf_predictions = tf.nn.softmax(tf_outputs[0], axis=-1)
-
-#         # Label predictions as toxic and non-toxic
-#         labels = ['Non-Toxic','Toxic']
-        
-#         # Max of predictions gets labelled
-#         label = tf.argmax(tf_predictions, axis=1)
-#         label = label.numpy()
-
-#         # Prints predictions into output file
-#         f = open('output/' + filename, 'w')
-#         for i in range(len(lines)):
-#             f.write(str(lines[i]) + str(labels[label[i]]) + "\n")
-
-
-
